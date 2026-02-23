@@ -1,77 +1,139 @@
 # StudioAI Render Server (ComfyUI Bridge)
 
-This service receives render jobs from `apps/api` and sends progress callbacks back to:
-- `POST /api/webhooks/render/progress`
-- `POST /api/webhooks/render/complete`
-- `POST /api/webhooks/render/failed`
+This service receives render jobs from `apps/api` and sends progress/completion callbacks back to the API webhook endpoints.
 
-## 1) Setup
+## What It Does
+
+- accepts `POST /render-full-episode`
+- renders one image per storyboard shot using ComfyUI
+- supports character reference image consistency
+- supports emotion reference images per character
+- reports progress to API callbacks
+- creates final MP4 with ffmpeg
+
+Current mode is `storyboard_keyframes` (stable and GPU-friendly for local workflows).
+
+## Requirements
+
+- Python 3.10+
+- ComfyUI running locally (Desktop app on `http://127.0.0.1:8000` or classic on `http://127.0.0.1:8188`)
+- ffmpeg installed and available in `PATH` (or set `FFMPEG_PATH`)
+
+## Setup
 
 ```bash
 cd render-server
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-# source .venv/bin/activate
+```
 
+Activate venv:
+
+- Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+- macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Create env file:
+
+```bash
 cp .env.example .env
 ```
 
-Set `.env` values:
-- `RENDER_API_KEY`: must match `RENDER_API_KEY` in `studioai/.env`
-- `COMFYUI_URL`: for ComfyUI Desktop usually `http://127.0.0.1:8000` (classic Python launch is often `8188`)
-- `COMFYUI_WORKFLOW_PATH`: optional exported ComfyUI workflow JSON path (recommended for custom nodes/models)
-- `COMFYUI_CHECKPOINT`: optional checkpoint name for built-in fallback workflow
-- `FFMPEG_PATH`: path to ffmpeg binary (or `ffmpeg` if in PATH)
+## Environment Variables
 
-## 2) Run
+```env
+# Security with StudioAI API
+RENDER_API_KEY=local-render-key
+
+# ComfyUI
+COMFYUI_URL=http://127.0.0.1:8000
+COMFYUI_WORKFLOW_PATH=
+COMFYUI_CHECKPOINT=
+
+# Render tuning
+COMFYUI_WIDTH=832
+COMFYUI_HEIGHT=480
+COMFYUI_STEPS=24
+COMFYUI_CFG=7
+COMFYUI_DENOISE=0.55
+COMFYUI_FPS=12
+COMFYUI_SAMPLER=euler
+COMFYUI_SCHEDULER=normal
+COMFYUI_TIMEOUT_SECONDS=240
+COMFYUI_REFERENCE_STRENGTH=0.65
+COMFYUI_NEGATIVE_BASE=blurry, low quality, distorted face, extra limbs, text, watermark
+
+# ffmpeg
+FFMPEG_PATH=ffmpeg
+```
+
+Notes:
+
+- If `COMFYUI_WORKFLOW_PATH` is set, use an API-format workflow JSON.
+- If no workflow path is set, `COMFYUI_CHECKPOINT` or an auto-detected checkpoint is required.
+
+## Run
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 9000 --reload
 ```
 
-Health check:
+Health checks:
 
 ```bash
 curl http://localhost:9000/health
 curl http://localhost:9000/comfy/health
 ```
 
-If `default_checkpoint` is `null`, either:
-- set `COMFYUI_CHECKPOINT` explicitly, or
-- set `COMFYUI_WORKFLOW_PATH` to a workflow that already includes your model loaders.
+## Connect to StudioAI API
 
-Use an **API workflow JSON** (`Save (API format)` / copied API prompt JSON), not the UI graph export.
-
-Without either of those, render jobs fail fast with a clear configuration error.
-
-## 3) Connect to StudioAI API
-
-In `studioai/.env`:
+In root `studioai/.env`:
 
 ```env
 RENDER_SERVER_URL=http://localhost:9000
-RENDER_API_KEY=your-render-server-secret
-RENDER_SERVER_CALLBACK_KEY=your-callback-secret
+RENDER_API_KEY=local-render-key
+RENDER_SERVER_CALLBACK_KEY=local-callback-key
 ```
 
-Restart API after editing env.
+Restart API after env changes.
 
-## 4) What this scaffold does now
+## API Contract Summary
 
-- Accepts `POST /render-full-episode`
-- Renders one keyframe per storyboard shot using ComfyUI API
-- Uses deterministic seeds and character prompt blending for consistency
-- Uses uploaded character reference images when available (`LoadImage` / IPAdapter-compatible templates)
-- Emits callback progress updates during shot rendering and muxing
-- Builds final mp4 with ffmpeg from keyframes
+### Inbound
 
-## 5) Rendering mode
+- `POST /render-full-episode`
+- Header: `x-api-key: <RENDER_API_KEY>` (if configured)
 
-- Default mode: `storyboard_keyframes` (image-first, stable on mid-range GPUs)
-- Built-in fallback workflow:
-1. Text-to-image if no reference image exists
-2. Image-to-image when a reference image exists
-- Recommended mode: set `COMFYUI_WORKFLOW_PATH` to your own exported workflow JSON for best quality/control
+### Outbound callbacks (to StudioAI API)
+
+- `POST /api/webhooks/render/progress`
+- `POST /api/webhooks/render/complete`
+- `POST /api/webhooks/render/failed`
+
+Header used on callbacks:
+
+- `x-render-server-key: <callback_key from request>`
+
+## ComfyUI Workflow Guidance
+
+- Best quality/control: provide `COMFYUI_WORKFLOW_PATH`
+- Quick fallback: use built-in text2img/img2img workflows with `COMFYUI_CHECKPOINT`
+- For reference-image workflows, include `LoadImage` and your IPAdapter nodes if desired
+
+## Known Limitations
+
+- TTS/music/SFX are currently callback progress stubs (not full synthesis pipelines yet)
+- Output is keyframe-based video assembly, not full frame-by-frame diffusion animation
