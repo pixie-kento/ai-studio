@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    expose:
+      - "8090"
+    volumes:
+      - pb_data:/pb_data
+      - ./pocketbase/pb_migrations:/pb_migrations
+    environment:
+      - PB_ENCRYPTION_KEY=${PB_ENCRYPTION_KEY}
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    expose:
+      - "3001"
+    env_file: .env
+    depends_on:
+      - pocketbase
+      - redis
+    environment:
+      - POCKETBASE_URL=http://pocketbase:8090
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    restart: always
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    expose:
+      - "80"
+    environment:
+      - VITE_API_URL=${API_URL}
+      - VITE_PB_URL=${POCKETBASE_URL}
+    depends_on:
+      - api
+    restart: always
+
+volumes:
+  pb_data:
+  redis_data:

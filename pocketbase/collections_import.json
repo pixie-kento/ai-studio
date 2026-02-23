@@ -1,0 +1,330 @@
+[
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "fields": [
+      { "id": "users_f001", "name": "display_name",         "type": "text",   "required": false, "min": null, "max": 255, "pattern": "" },
+      { "id": "users_f002", "name": "platform_role",        "type": "select", "required": false, "values": ["superadmin", "user"], "maxSelect": 1 },
+      { "id": "users_f003", "name": "stripe_customer_id",   "type": "text",   "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "users_f004", "name": "onboarding_completed", "type": "bool",   "required": false }
+    ],
+    "indexes": [],
+    "listRule": "id = @request.auth.id",
+    "viewRule": "id = @request.auth.id",
+    "createRule": "",
+    "updateRule": "id = @request.auth.id",
+    "deleteRule": "id = @request.auth.id",
+    "passwordAuth": { "enabled": true, "identityFields": ["email"] },
+    "oauth2": { "enabled": false, "providers": [] },
+    "mfa": { "enabled": false, "duration": 1800 },
+    "otp": { "enabled": false, "duration": 180, "length": 8 }
+  },
+
+  {
+    "id": "wspace0001",
+    "name": "workspaces",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "ws_f001", "name": "name",                   "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f002", "name": "slug",                   "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f003", "name": "owner",                  "type": "relation", "required": true,  "collectionId": "_pb_users_auth_", "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ws_f004", "name": "logo",                   "type": "file",     "required": false, "maxSelect": 1, "maxSize": 2097152, "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["128x128","64x64"], "protected": false },
+      { "id": "ws_f005", "name": "plan",                   "type": "select",   "required": true,  "values": ["starter","pro","studio"], "maxSelect": 1 },
+      { "id": "ws_f006", "name": "plan_status",            "type": "select",   "required": true,  "values": ["active","past_due","cancelled","trialing"], "maxSelect": 1 },
+      { "id": "ws_f007", "name": "stripe_subscription_id", "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f008", "name": "stripe_price_id",        "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f009", "name": "trial_ends_at",          "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "ws_f010", "name": "render_priority",        "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "ws_f011", "name": "episodes_this_month",    "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "ws_f012", "name": "month_reset_at",         "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "ws_f013", "name": "openai_api_key",         "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f014", "name": "custom_render_url",      "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ws_f015", "name": "custom_render_key",      "type": "text",     "required": false, "min": null, "max": null, "pattern": "" }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_workspaces_slug ON workspaces (slug)"
+    ],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "wsmemb0001",
+    "name": "workspace_members",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "wsm_f001", "name": "workspace",  "type": "relation", "required": true,  "collectionId": "wspace0001",      "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "wsm_f002", "name": "user",       "type": "relation", "required": true,  "collectionId": "_pb_users_auth_", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "wsm_f003", "name": "role",       "type": "select",   "required": true,  "values": ["owner","admin","reviewer","creator","viewer"], "maxSelect": 1 },
+      { "id": "wsm_f004", "name": "invited_by", "type": "relation", "required": false, "collectionId": "_pb_users_auth_", "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_workspace_members_unique ON workspace_members (workspace, user)"
+    ],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "shows00001",
+    "name": "shows",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "sh_f001", "name": "workspace",            "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "sh_f002", "name": "name",                 "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f003", "name": "slug",                 "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f004", "name": "description",          "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f005", "name": "tagline",              "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f006", "name": "thumbnail",            "type": "file",     "required": false, "maxSelect": 1, "maxSize": 5242880, "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["400x400","800x450"], "protected": false },
+      { "id": "sh_f007", "name": "banner",               "type": "file",     "required": false, "maxSelect": 1, "maxSize": 5242880, "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["1280x720"], "protected": false },
+      { "id": "sh_f008", "name": "target_age",           "type": "select",   "required": false, "values": ["3-5","4-6","5-7","6-8","7-10"], "maxSelect": 1 },
+      { "id": "sh_f009", "name": "status",               "type": "select",   "required": false, "values": ["active","paused","archived"], "maxSelect": 1 },
+      { "id": "sh_f010", "name": "youtube_channel_id",   "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f011", "name": "youtube_playlist_id",  "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f012", "name": "schedule_enabled",     "type": "bool",     "required": false },
+      { "id": "sh_f013", "name": "schedule_day",         "type": "select",   "required": false, "values": ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"], "maxSelect": 1 },
+      { "id": "sh_f014", "name": "schedule_time",        "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f015", "name": "schedule_timezone",    "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f016", "name": "openai_model",         "type": "select",   "required": false, "values": ["gpt-4o","gpt-4o-mini","gpt-4-turbo"], "maxSelect": 1 },
+      { "id": "sh_f017", "name": "style_prompt",         "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "sh_f018", "name": "episodes_count",       "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "chars00001",
+    "name": "characters",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "ch_f001", "name": "show",                    "type": "relation", "required": true,  "collectionId": "shows00001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ch_f002", "name": "workspace",               "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ch_f003", "name": "name",                    "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f004", "name": "role",                    "type": "select",   "required": false, "values": ["main","supporting","recurring","background"], "maxSelect": 1 },
+      { "id": "ch_f005", "name": "age",                     "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f006", "name": "personality_traits",      "type": "json",     "required": false, "maxSize": 2000000 },
+      { "id": "ch_f007", "name": "speech_style",            "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f008", "name": "catchphrases",            "type": "json",     "required": false, "maxSize": 2000000 },
+      { "id": "ch_f009", "name": "fears",                   "type": "json",     "required": false, "maxSize": 2000000 },
+      { "id": "ch_f010", "name": "relationships",           "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f011", "name": "visual_description",      "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f012", "name": "clothing_description",    "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f013", "name": "growth_rules",            "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f014", "name": "backstory",               "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f015", "name": "reference_image",         "type": "file",     "required": false, "maxSelect": 1, "maxSize": 5242880, "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["300x300","128x128"], "protected": false },
+      { "id": "ch_f016", "name": "comfyui_positive_prompt", "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f017", "name": "comfyui_negative_prompt", "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f018", "name": "master_seed",             "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "ch_f019", "name": "lora_file",               "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ch_f020", "name": "is_active",               "type": "bool",     "required": false },
+      { "id": "ch_f021", "name": "sort_order",              "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "seasns0001",
+    "name": "seasons",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "se_f001", "name": "show",           "type": "relation", "required": true,  "collectionId": "shows00001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "se_f002", "name": "workspace",      "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "se_f003", "name": "season_number",  "type": "number",   "required": true,  "min": null, "max": null, "noDecimal": true },
+      { "id": "se_f004", "name": "title",          "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "se_f005", "name": "description",    "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "se_f006", "name": "thumbnail",      "type": "file",     "required": false, "maxSelect": 1, "maxSize": 5242880, "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["400x400"], "protected": false },
+      { "id": "se_f007", "name": "status",         "type": "select",   "required": false, "values": ["upcoming","active","completed"], "maxSelect": 1 },
+      { "id": "se_f008", "name": "episodes_count", "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "episods001",
+    "name": "episodes",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "ep_f001", "name": "show",                 "type": "relation", "required": true,  "collectionId": "shows00001",      "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ep_f002", "name": "season",               "type": "relation", "required": false, "collectionId": "seasns0001",      "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ep_f003", "name": "workspace",            "type": "relation", "required": true,  "collectionId": "wspace0001",      "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ep_f004", "name": "episode_number",       "type": "number",   "required": true,  "min": null, "max": null, "noDecimal": true },
+      { "id": "ep_f005", "name": "title",                "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f006", "name": "moral",                "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f007", "name": "theme",                "type": "select",   "required": false, "values": ["friendship","courage","honesty","sharing_kindness","never_give_up","other"], "maxSelect": 1 },
+      { "id": "ep_f008", "name": "theme_tags",           "type": "json",     "required": false, "maxSize": 2000000 },
+      { "id": "ep_f009", "name": "summary",              "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f010", "name": "script",               "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f011", "name": "status",               "type": "select",   "required": false, "values": ["PENDING","SCRIPT_GENERATING","SCRIPT_READY","RENDER_QUEUED","RENDERING","RENDER_FAILED","AWAITING_APPROVAL","APPROVED","REJECTED","PUBLISHING","PUBLISHED"], "maxSelect": 1 },
+      { "id": "ep_f012", "name": "rejection_reason",     "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f013", "name": "youtube_url",          "type": "url",      "required": false, "exceptDomains": null, "onlyDomains": null },
+      { "id": "ep_f014", "name": "youtube_video_id",     "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f015", "name": "drive_file_id",        "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f016", "name": "video_file",           "type": "file",     "required": false, "maxSelect": 1, "maxSize": 524288000, "mimeTypes": ["video/mp4"], "thumbs": [], "protected": false },
+      { "id": "ep_f017", "name": "thumbnail",            "type": "file",     "required": false, "maxSelect": 1, "maxSize": 5242880,   "mimeTypes": ["image/jpeg","image/png","image/webp"], "thumbs": ["400x225","800x450"], "protected": false },
+      { "id": "ep_f018", "name": "duration_seconds",     "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "ep_f019", "name": "render_started_at",    "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "ep_f020", "name": "render_completed_at",  "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "ep_f021", "name": "published_at",         "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "ep_f022", "name": "approved_by",          "type": "relation", "required": false, "collectionId": "_pb_users_auth_", "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ep_f023", "name": "created_by",           "type": "relation", "required": false, "collectionId": "_pb_users_auth_", "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "ep_f024", "name": "render_job_id",        "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "ep_f025", "name": "queue_position",       "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "morals0001",
+    "name": "morals",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "mo_f001", "name": "show",       "type": "relation", "required": true,  "collectionId": "shows00001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "mo_f002", "name": "workspace",  "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "mo_f003", "name": "moral_text", "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "mo_f004", "name": "theme",      "type": "select",   "required": false, "values": ["friendship","courage","honesty","sharing_kindness","never_give_up","other"], "maxSelect": 1 },
+      { "id": "mo_f005", "name": "episode",    "type": "relation", "required": false, "collectionId": "episods001", "cascadeDelete": false, "minSelect": null, "maxSelect": 1, "displayFields": [] }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "rjobs00001",
+    "name": "render_jobs",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "rj_f001", "name": "episode",               "type": "relation", "required": true,  "collectionId": "episods001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "rj_f002", "name": "workspace",             "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "rj_f003", "name": "show",                  "type": "relation", "required": true,  "collectionId": "shows00001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "rj_f004", "name": "status",                "type": "select",   "required": false, "values": ["queued","running","completed","failed","cancelled"], "maxSelect": 1 },
+      { "id": "rj_f005", "name": "priority",              "type": "number",   "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "rj_f006", "name": "progress_percent",      "type": "number",   "required": false, "min": 0, "max": 100, "noDecimal": true },
+      { "id": "rj_f007", "name": "current_step",          "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "rj_f008", "name": "error_message",         "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "rj_f009", "name": "render_server_job_id",  "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "rj_f010", "name": "started_at",            "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "rj_f011", "name": "completed_at",          "type": "date",     "required": false, "min": "", "max": "" },
+      { "id": "rj_f012", "name": "output_file_path",      "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "rj_f013", "name": "render_settings",       "type": "json",     "required": false, "maxSize": 2000000 }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "notifs0001",
+    "name": "notifications",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "no_f001", "name": "workspace",  "type": "relation", "required": true,  "collectionId": "wspace0001",      "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "no_f002", "name": "user",       "type": "relation", "required": true,  "collectionId": "_pb_users_auth_", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "no_f003", "name": "title",      "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "no_f004", "name": "message",    "type": "text",     "required": true,  "min": null, "max": null, "pattern": "" },
+      { "id": "no_f005", "name": "type",       "type": "select",   "required": false, "values": ["new_episode","approval_needed","render_complete","render_failed","published","plan_limit","plan_expiry","render_queued","system"], "maxSelect": 1 },
+      { "id": "no_f006", "name": "is_read",    "type": "bool",     "required": false },
+      { "id": "no_f007", "name": "action_url", "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "no_f008", "name": "metadata",   "type": "json",     "required": false, "maxSize": 2000000 }
+    ],
+    "indexes": [],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": null,
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+
+  {
+    "id": "plogs00001",
+    "name": "pipeline_logs",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "pl_f001", "name": "episode",   "type": "relation", "required": true,  "collectionId": "episods001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "pl_f002", "name": "workspace", "type": "relation", "required": true,  "collectionId": "wspace0001", "cascadeDelete": true,  "minSelect": null, "maxSelect": 1, "displayFields": [] },
+      { "id": "pl_f003", "name": "event",     "type": "select",   "required": false, "values": ["created","script_generating","script_ready","render_queued","render_started","render_progress","render_completed","render_failed","approved","rejected","publishing","published"], "maxSelect": 1 },
+      { "id": "pl_f004", "name": "message",   "type": "text",     "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "pl_f005", "name": "metadata",  "type": "json",     "required": false, "maxSize": 2000000 }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+
+  {
+    "id": "plimts0001",
+    "name": "plan_limits",
+    "type": "base",
+    "system": false,
+    "fields": [
+      { "id": "pm_f001", "name": "plan",                    "type": "select", "required": true,  "values": ["starter","pro","studio"], "maxSelect": 1 },
+      { "id": "pm_f002", "name": "max_shows",               "type": "number", "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "pm_f003", "name": "max_characters_per_show", "type": "number", "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "pm_f004", "name": "episodes_per_month",      "type": "number", "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "pm_f005", "name": "priority_rendering",      "type": "bool",   "required": false },
+      { "id": "pm_f006", "name": "custom_style_prompts",    "type": "bool",   "required": false },
+      { "id": "pm_f007", "name": "youtube_auto_publish",    "type": "bool",   "required": false },
+      { "id": "pm_f008", "name": "team_members",            "type": "number", "required": false, "min": null, "max": null, "noDecimal": true },
+      { "id": "pm_f009", "name": "storage_gb",              "type": "number", "required": false, "min": null, "max": null, "noDecimal": false },
+      { "id": "pm_f010", "name": "price_monthly",           "type": "number", "required": false, "min": null, "max": null, "noDecimal": false },
+      { "id": "pm_f011", "name": "price_yearly",            "type": "number", "required": false, "min": null, "max": null, "noDecimal": false },
+      { "id": "pm_f012", "name": "stripe_price_id_monthly", "type": "text",   "required": false, "min": null, "max": null, "pattern": "" },
+      { "id": "pm_f013", "name": "stripe_price_id_yearly",  "type": "text",   "required": false, "min": null, "max": null, "pattern": "" }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_plan_limits_plan ON plan_limits (plan)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  }
+]

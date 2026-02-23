@@ -1,0 +1,47 @@
+  [
+    {
+      "plan": "starter",
+      "max_shows": 2,
+      "max_characters_per_show": 4,
+      "episodes_per_month": 8,
+      "priority_rendering": false,
+      "custom_style_prompts": false,
+      "youtube_auto_publish": false,
+      "team_members": 1,
+      "storage_gb": 5,
+      "price_monthly": 19,
+      "price_yearly": 182,
+      "stripe_price_id_monthly": "",
+      "stripe_price_id_yearly": ""
+    },
+    {
+      "plan": "pro",
+      "max_shows": 5,
+      "max_characters_per_show": 10,
+      "episodes_per_month": 20,
+      "priority_rendering": true,
+      "custom_style_prompts": true,
+      "youtube_auto_publish": true,
+      "team_members": 5,
+      "storage_gb": 25,
+      "price_monthly": 49,
+      "price_yearly": 470,
+      "stripe_price_id_monthly": "",
+      "stripe_price_id_yearly": ""
+    },
+    {
+      "plan": "studio",
+      "max_shows": -1,
+      "max_characters_per_show": -1,
+      "episodes_per_month": -1,
+      "priority_rendering": true,
+      "custom_style_prompts": true,
+      "youtube_auto_publish": true,
+      "team_members": -1,
+      "storage_gb": 100,
+      "price_monthly": 99,
+      "price_yearly": 950,
+      "stripe_price_id_monthly": "",
+      "stripe_price_id_yearly": ""
+    }
+  ]

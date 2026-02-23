@@ -1,0 +1,17 @@
+{
+  "name": "studioai",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "pb": "node scripts/start-pb.mjs",
+    "dev": "concurrently --names \"pb,api,web\" --prefix-colors \"cyan,yellow,green\" \"npm run pb\" \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
